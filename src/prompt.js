@@ -2,7 +2,7 @@ import {tasks} from './catalog.js';
 export function generate(s){
  if(!s.selected.length&&!s.custom.trim())return '';
  const sections=['다음 조건에 맞춰 나의 개인 비서로 도와줘.'];
- for(const id of s.selected){const t=tasks.find(x=>x.id===id);if(!t)continue;const v=s.values[id]||{};const rows=t.fields.map(f=>{const a=v[f.label];return a&&(Array.isArray(a)?a.length:true)?`${f.label}: ${Array.isArray(a)?a.join(', '):a}`:''}).filter(Boolean);sections.push(`[${t.title}]\n${rows.join('\n')}`)}
+ for(const id of s.selected){const t=tasks.find(x=>x.id===id);if(!t)continue;const v=s.values[id]||{};const rows=t.fields.filter(f=>id!=='stocks'||!['관심 업종','관심 종목'].includes(f.label)||(v['관심 범위']||[]).includes(f.label==='관심 업종'?'특정 업종':'특정 종목')).map(f=>{const a=v[f.label];return a&&(Array.isArray(a)?a.length:true)?`${f.label}: ${Array.isArray(a)?a.join(', '):a}`:''}).filter(Boolean);sections.push(`[${t.title}]\n${rows.join('\n')}`)}
  if(s.custom.trim())sections.push(`[직접 작성한 요청]\n${s.custom.trim()}`);
  sections.push(`[답변 방식]\n길이: ${s.length}\n말투: ${s.tone}\n형식: ${s.format}\n강조는 실제 굵게 서식으로 표시하고 서식 기호를 그대로 노출하지 마.`);
  sections.push(`[실행과 전달]\n${s.repeat==='지금 한 번'?'지금 한 번 실행해줘.':`${s.repeat}${s.repeat==='요일 선택'?' ('+s.days.join(', ')+')':''}, ${s.time}, ${s.zone} 기준으로 반복하고 싶어.`}\n결과를 받을 곳: ${s.channel}`);
