@@ -1,30 +1,36 @@
-# 프롬테카
+# 프롬테카 — 개인 비서
 
-체크리스트와 직접 입력으로 개인 비서 프롬프트를 만드는 한국어 웹 도구. 30개 작업, 작업별 상세 설정, 반복 일정과 전달 채널 요청, 프롬프트 편집·복사·다운로드·ChatGPT 이동을 제공합니다.
+공개 사이트: https://glasscola.github.io/aiPromteca/
 
-API 키나 백엔드 없이 브라우저에서 동작합니다. 입력값은 해당 브라우저 localStorage에 보관됩니다. 이 사이트는 실제 예약이나 카카오톡 발송을 수행하지 않습니다. GPT에서 지원 도구와 권한을 확인하도록 요청문을 생성합니다. GPT 답변은 이용 계정의 한도에 따릅니다.
+## 시작
+- Windows: 저장소 ZIP을 풀고 start-assistant.cmd 실행
+- Node.js 24 이상: npm ci 후 npm start
+- 개인 실행 화면: http://localhost:4317
 
-## 개발
+## 구성
+- 공개 사이트: 시작 안내, 자동화 기능 범위, 30개 GPT 요청문 생성
+- 개인 실행 서버: 설정, 카카오 OAuth, 테스트 발송·수신 확인, 작업 편집, 실행 기록
+- GitHub Actions: PC가 꺼져도 15분 간격으로 예약 확인. 정시 도착 보장 없음.
+- 날씨(Open-Meteo), 뉴스 제목·링크(Google 뉴스 RSS), 신입 채용(고용24 공식 API), 직접 작성한 알림
+- 카카오 기본 텍스트 메시지 + 별도 키로 암호화한 전체 결과 링크
+- GPT API를 호출하지 않음. 뉴스 AI 요약, 채용 원문 전수 검증이나 30개 작업의 무인 실행을 제공한다고 표시하지 않음.
 
-`npm start`로 http://localhost:4173 을 열고 `npm test`로 프롬프트 생성 검사를 실행합니다. 별도 npm 의존성은 없습니다.
+## 사용자 연결이 필요한 부분
+카카오 개발자 앱 등록·로그인·메시지 권한 동의와 테스트 수신 확인은 사용자가 진행합니다.
+채용 자동 조회에는 고용24 인증키가 필요합니다.
+키 저장만으로 실제 연결이나 수신 완료로 표시하지 않습니다.
 
-- `src/catalog.js`: 작업과 설정 스키마
-- `src/prompt.js`: 요청문 생성
-- `src/storage.js`: 브라우저 저장
-- `src/app.js`: 화면과 입력 처리
-- `styles.css`: 반응형 디자인
+## 파일
+- src/dashboard.js, dashboard.css: 새 관리 화면
+- src/catalog.js, task-options.js, task-rules.js, prompt.js, execution-rules.js: GPT 요청문 도구
+- server/index.js: 개인 화면 HTTP API, 세션·CSRF·OAuth state
+- server/kakao.js: 로그인 토큰·갱신·발송
+- server/sources.js: 실제 자료 수집
+- server/runner.js, validation.js: 예약, 중복 방지, 실행 상태
+- server/store.js, crypto.js, github.js: 암호화 저장과 클라우드 연결
+- server/reports.js, report.html, src/report.js: 개인 결과 링크
+- .github/workflows/assistant.yml: 클라우드 실행
+- docs/OPERATIONS.md: 실행 구조·제약·운영 안내
 
-GitHub Pages의 Source를 GitHub Actions로 설정하면 main push 시 테스트 후 배포됩니다. 긴 프롬프트는 복사·붙여넣기로 전달합니다. 앱 링크는 codex 프로토콜을 지원하는 데스크톱 앱용입니다.
-
-
-## 요청문 업데이트
-
-- 30개 작업의 자료·출처·완료 기준: `src/task-rules.js`
-- 작업별 추가 입력 및 조건부 표시: `src/task-options.js`
-- 목적지 유지, 연결 조사, 권한·비용 승인, 실패 대응, 테스트와 예약 증거: `src/execution-rules.js`
-- 검색 건수와 항목별 설명 길이를 분리합니다. 기존 저장 설정의 누락된 새 필드는 기본값으로 보완합니다.
-- 카카오톡·노션 선택은 연결 목표이며 실제 연결 상태가 아닙니다. GPT로 요청을 전달할 뿐 이 사이트가 직접 발송하거나 예약하지 않습니다.
-- 긴 요청은 클립보드 복사 성공 후 GPT를 열며 사용자가 직접 붙여넣습니다. 복사가 실패하면 요청문을 선택해 수동 복사를 안내합니다.
-- 로그인·추가 결제 승인이 필요하거나 실행 도구가 없으면 해당 단계를 설명하게 하며, 무한 재시도나 권한 우회를 요구하지 않습니다.
-
-검증: `npm test` (30개 작업 규칙, 조건부 필드 제거, 목표 건수, 전달처 변경 금지 등).
+npm test로 회귀 검사를 실행합니다.
+.assistant 폴더는 비밀정보이므로 공유하거나 Git에 올리지 마세요. 기존 클라우드 복구에 필요한 키가 들어 있습니다.
