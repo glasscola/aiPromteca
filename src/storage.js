@@ -1,0 +1,3 @@
+export const initial=()=>({step:0,selected:[],values:{},custom:'',length:'짧게',tone:'정중하게',format:'핵심 목록',repeat:'지금 한 번',days:['월','화','수','목','금'],time:'08:00',zone:'Asia/Seoul',channel:'ChatGPT',edited:null});
+export function restore(){try{const x=JSON.parse(localStorage.getItem('promteca-v1'));if(!x||!Array.isArray(x.selected)||typeof x.values!=='object'||!x.values)return initial();return {...initial(),...x,step:Math.min(3,Math.max(0,Number(x.step)||0))}}catch{return initial()}}
+export function save(s){try{localStorage.setItem('promteca-v1',JSON.stringify(s));return true}catch{return false}}
