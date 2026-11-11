@@ -2,8 +2,8 @@
 
 ## 실행
 Node.js 24 이상에서 npm ci 후 npm start. Windows는 start-assistant.cmd.
-개인 화면 http://localhost:4317 은 127.0.0.1 에만 바인딩합니다.
-공개 GitHub Pages 화면은 안내와 GPT 요청문을 제공하며 개인 설정 API가 없습니다.
+선택 기능 개인 화면 http://localhost:4317/automation.html 은 127.0.0.1 에만 바인딩합니다.
+공개 GitHub Pages의 메인은 원래 체크리스트와 GPT 요청문을 제공하며 개인 설정 API가 없습니다.
 
 ## 실제 자동 실행
 1. 개인 화면에서 카카오 개발자 앱 설정·로그인·메시지 전송 동의

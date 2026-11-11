@@ -25,7 +25,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - uses: actions/configure-pages@v5
-      - run: mkdir -p dist/src && cp index.html prompt.html report.html styles.css dashboard.css dist/ && cp src/*.js dist/src/ && touch dist/.nojekyll
+      - run: mkdir -p dist/src && cp index.html automation.html prompt.html report.html styles.css dashboard.css dist/ && cp src/*.js dist/src/ && touch dist/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
