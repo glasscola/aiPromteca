@@ -1,3 +1,4 @@
+import {extraFields} from './task-options.js';
 const text=(label,placeholder='')=>({label,type:'text',placeholder});
 const one=(label,options)=>({label,type:'one',options});
 const many=(label,options)=>({label,type:'many',options});
@@ -33,4 +34,4 @@ export const tasks=[
 ['travel','쇼핑·여가','여행 일정','⌁',[text('목적지'),text('여행 날짜·기간'),text('인원·예산'),many('관심 활동',['맛집','자연','문화·전시','쇼핑','휴식']),one('이동수단',['대중교통','자동차','도보 중심']),one('일정 밀도',['여유롭게','적당히','알차게'])]],
 ['places','쇼핑·여가','맛집·장소 찾기','⌖',[text('지역'),one('장소',['맛집','카페','산책 장소','모임 공간']),text('인원·예산'),many('중요한 조건',['주차','조용한 곳','예약 가능','아이 동반','접근성'])]],
 ['events','쇼핑·여가','행사·전시 소식','▨',[text('지역'),one('기간',['오늘','이번 주말','이번 달']),many('종류',['전시','공연','축제','체험','무료 행사']),text('인원·예산')]]
-].map(([id,group,title,icon,fields])=>({id,group,title,icon,fields:[...fields,text('추가 조건')]}));
+].map(([id,group,title,icon,fields])=>({id,group,title,icon,fields:[...fields.map(f=>id==='jobs'&&f.label==='경력'?{...f,when:{field:'찾을 것',values:['채용','인턴']}}:f),...(extraFields[id]||[]),text('추가 조건')]}));
