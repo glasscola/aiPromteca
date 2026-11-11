@@ -62,3 +62,25 @@ test('returning user starts on checklist and retains previous selections',()=>{
 test('method-first mode does not authorize immediate external actions',()=>{
  const x=setup();try{x.doc.querySelector('[data-select="jobs"]').click();x.doc.querySelector('[data-step="2"]').click();x.doc.querySelector('[data-key="intent"][value="하는 방법부터 안내받기"]').click();assert.ok(x.doc.getElementById('prompt').value.includes('아직 외부 발송·예약을 실행하지 마'))}finally{x.finish()}
 });
+
+test('older external delivery defaults migrate to GPT without losing task settings',()=>{
+ const x=setup({saved:{selected:['stocks'],values:{stocks:{'관심 종목':'NVIDIA'}},channel:'카카오톡',repeat:'매일',advancedDelivery:true}});
+ try{assert.equal(x.app.getState().channel,'ChatGPT');assert.equal(x.app.getState().repeat,'지금 한 번');assert.equal(x.app.getState().advancedDelivery,false);assert.equal(x.app.getState().values.stocks['관심 종목'],'NVIDIA')}finally{x.finish()}
+});
+test('explicit optional choice after migration is retained',()=>{
+ const x=setup({saved:{preferencesVersion:2,selected:['weather'],values:{},channel:'노션',repeat:'지금 한 번',advancedDelivery:true}});
+ try{assert.equal(x.app.getState().channel,'노션')}finally{x.finish()}
+});
+test('connection guides open only on request and never mark an integration connected',()=>{
+ for(const channel of ['카카오톡','노션']){const x=setup();try{
+  x.doc.querySelector('[data-select="weather"]').click();x.doc.querySelector('[data-step="2"]').click();
+  assert.equal(x.doc.querySelector('[data-connection-guide]'),null);
+  assert.ok(x.doc.querySelector('.default-destination').textContent.includes('GPT'));
+  x.doc.querySelector('[data-advanced]').click();x.doc.querySelector('[data-key="channel"][value="'+channel+'"]').click();
+  assert.equal(x.doc.getElementById('connection-guide'),null);
+  x.doc.querySelector('[data-connection-guide]').click();
+  const guide=x.doc.getElementById('connection-guide');assert.ok(guide.hasAttribute('open'));assert.equal(guide.querySelectorAll('li').length,4);assert.equal(x.opened.length,0);
+  if(channel==='노션')assert.ok(guide.textContent.includes('직접 로그인·저장 기능이 없습니다'));
+  guide.querySelector('button').click();assert.ok(!guide.hasAttribute('open'));
+ }finally{x.finish()}}
+});

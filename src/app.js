@@ -1,3 +1,4 @@
+import {showConnectionGuide} from './connection-guide.js';
 import {visibleField,effectiveValues} from './task-options.js';
 import {groups,tasks} from './catalog.js';
 import {generate} from './prompt.js';
@@ -28,9 +29,10 @@ export function mountBuilder(doc,dependencies={}){
   if(s.step===0)html+='<input class="search" id="search" aria-label="작업 찾기" placeholder="날씨, 증권 뉴스, 여행…" value="'+esc(query)+'"><div class="categories">'+groups.map(g=>'<button data-category="'+esc(g)+'" class="'+(g===category?'active':'')+'" aria-pressed="'+(g===category)+'">'+g+'</button>').join('')+'</div><div class="task-grid" id="task-grid">'+grid()+'</div><label class="field custom"><span class="field-title">목록에 없는 일도 직접 입력하세요.</span><textarea data-key="custom" placeholder="원하는 일이나 추가 조건을 자유롭게 적어주세요.">'+esc(s.custom)+'</textarea></label>';
   if(s.step===1)html+=s.selected.map(id=>detail(tasks.find(t=>t.id===id))).join('')+(!s.selected.length?'<div class="empty">직접 입력한 요청으로 진행합니다.</div>':'')+(s.custom?'<label class="field"><span class="field-title">직접 입력한 요청</span><textarea data-key="custom">'+esc(s.custom)+'</textarea></label>':'');
   if(s.step===2){
-   html+=options('GPT에게 원하는 도움',['바로 답변받기','하는 방법부터 안내받기'],s.intent,'intent')+options('항목별 설명 길이',['짧게','보통','자세히'],s.length,'length')+options('말투',['편하게','정중하게'],s.tone,'tone')+options('결과 형식',['핵심 목록','표','문단'],s.format,'format');
+   html+='<div class="default-destination">기본 전달처 · GPT</div>'+options('GPT에게 원하는 도움',['바로 답변받기','하는 방법부터 안내받기'],s.intent,'intent')+options('항목별 설명 길이',['짧게','보통','자세히'],s.length,'length')+options('말투',['편하게','정중하게'],s.tone,'tone')+options('결과 형식',['핵심 목록','표','문단'],s.format,'format');
    html+='<div class="optional-delivery"><label class="option"><input type="checkbox" data-advanced '+(s.advancedDelivery?'checked':'')+'> 반복 실행이나 다른 곳으로 받기도 요청할래요</label>';
    if(s.advancedDelivery)html+=options('실행 주기',['지금 한 번','매일','평일','요일 선택'],s.repeat,'repeat')+(s.repeat!=='지금 한 번'?(s.repeat==='요일 선택'?options('요일',['월','화','수','목','금','토','일'],s.days,'days','',true):'')+input('희망 시각',s.time,'time','','','time')+options('시간대',['Asia/Seoul','Asia/Tokyo','America/New_York','America/Los_Angeles','Europe/London','UTC'],s.zone,'zone'):'')+options('원하는 전달처',['ChatGPT','카카오톡','노션'],s.channel,'channel')+(s.repeat!=='지금 한 번'?options('새 정보가 없을 때',['없다고 알려주기','보내지 않기'],s.noUpdates,'noUpdates'):'')+'<div class="notice">선택한 방식의 설정 방법을 GPT에게 함께 요청합니다. 이 화면에서 연결이나 예약이 등록되지는 않습니다.</div>';
+   if(s.advancedDelivery&&s.channel!=='ChatGPT')html+='<button class="secondary" data-connection-guide="'+esc(s.channel)+'">'+esc(s.channel)+' 연결 방법 보기</button>';
    html+='</div>';
   }
   if(s.step===3)html+='<div class="review-row"><span>맡길 일</span><strong>'+esc(s.selected.map(id=>tasks.find(t=>t.id===id).title).join(', ')||'직접 입력')+'</strong></div><div class="review-row"><span>도움</span><strong>'+esc(s.intent)+'</strong></div><div class="review-row"><span>답변</span><strong>'+esc(s.length+' · '+s.tone+' · '+s.format)+'</strong></div>'+(s.advancedDelivery?'<div class="review-row"><span>추가 요청</span><strong>'+esc(s.repeat+' · '+s.channel)+'</strong></div>':'')+'<div class="actions"><button class="secondary" id="edit-prompt">'+(s.edited===null?'요청문 직접 수정':'자동 생성으로 되돌리기')+'</button><button class="quiet" id="download">텍스트 저장 ↓</button></div>';
@@ -49,6 +51,7 @@ export function mountBuilder(doc,dependencies={}){
  async function copy(){try{await clipboard.writeText(s.edited??generate(s));toast('요청문을 복사했습니다.');return true}catch{$('prompt').focus();$('prompt').select();toast('자동 복사가 차단되었습니다. 선택된 요청문을 직접 복사해주세요.');return false}}
  async function click(e){
   const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.connectionGuide){showConnectionGuide(doc,b.dataset.connectionGuide);return}
   if(b.dataset.step!==undefined)return move(Number(b.dataset.step));
   if(b.dataset.category){category=b.dataset.category;render();return}
   if(b.dataset.remove){s.selected=s.selected.filter(x=>x!==b.dataset.remove);changed();render();return}

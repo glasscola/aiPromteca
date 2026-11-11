@@ -8,3 +8,5 @@
 dialog{border:1px solid var(--line);border-radius:18px;padding:30px;width:min(480px,calc(100% - 32px));color:#202d28}
 dialog::backdrop{background:#203d3066}dialog h2{font-size:22px}dialog .primary{color:white}
 .task-detail>summary{padding-bottom:24px}#preview-actions{margin-top:18px}.preview textarea{min-height:330px}
+
+.default-destination{padding:14px 16px;background:#eaf3ea;border-radius:10px;color:var(--green);font-weight:600;margin-bottom:24px}#connection-guide{width:min(600px,calc(100% - 32px))}#connection-guide li{margin:14px 0;line-height:1.7}#connection-guide p{font-size:14px}
