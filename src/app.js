@@ -50,7 +50,7 @@ export function mountBuilder(doc,dependencies={}){
  async function copy(){try{await clipboard.writeText(s.edited??generate(s));toast('요청문을 복사했습니다.');return true}catch{$('prompt').closest('details').open=true;$('prompt').focus();$('prompt').select();toast('자동 복사가 차단되었습니다. 선택된 요청문을 직접 복사해주세요.');return false}}
  async function click(e){
   const b=e.target.closest('button');if(!b)return;
-  
+
   if(b.dataset.routine){const r=routines.find(x=>x.id===b.dataset.routine);s.selected=[...new Set([...s.selected,...r.tasks])];for(const id of r.tasks)s.values[id]??=effectiveValues(tasks.find(t=>t.id===id));changed();move(1);return}
   if(b.dataset.step!==undefined)return move(Number(b.dataset.step));
   if(b.dataset.category){category=b.dataset.category;render();return}
