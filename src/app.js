@@ -1,4 +1,4 @@
-import {showConnectionGuide} from './connection-guide.js';
+import {showConnectionGuide} from './connection-guide.js?v=2';
 import {visibleField,effectiveValues} from './task-options.js';
 import {groups,tasks} from './catalog.js';
 import {generate} from './prompt.js';

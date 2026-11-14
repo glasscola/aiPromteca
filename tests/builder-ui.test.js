@@ -79,7 +79,7 @@ test('connection guides open only on request and never mark an integration conne
   x.doc.querySelector('[data-advanced]').click();x.doc.querySelector('[data-key="channel"][value="'+channel+'"]').click();
   assert.equal(x.doc.getElementById('connection-guide'),null);
   x.doc.querySelector('[data-connection-guide]').click();
-  const guide=x.doc.getElementById('connection-guide');assert.ok(guide.hasAttribute('open'));assert.equal(guide.querySelectorAll('li').length,4);assert.equal(x.opened.length,0);
+  const guide=x.doc.getElementById('connection-guide');assert.ok(guide.hasAttribute('open'));assert.equal(guide.querySelectorAll('li').length,channel==='노션'?4:0);if(channel==='카카오톡')assert.equal(guide.querySelector('a').href,'http://localhost:4317/kakao.html');assert.equal(x.opened.length,0);
   if(channel==='노션')assert.ok(guide.textContent.includes('직접 로그인·저장 기능이 없습니다'));
   guide.querySelector('button').click();assert.ok(!guide.hasAttribute('open'));
  }finally{x.finish()}}

@@ -33,7 +33,7 @@ const server=http.createServer(async(req,res)=>{
     if(url.searchParams.get('error')||!url.searchParams.get('code'))throw Error('카카오 로그인이 취소되었습니다.');
     const {state}=await store.read(),data=await exchange(url.searchParams.get('code'),state.connection);
     await store.transact(x=>{Object.assign(x.connection,{accessToken:data.access_token,refreshToken:data.refresh_token,expiresAt:Date.now()+data.expires_in*1000,connectedAt:new Date().toISOString()});x.test=null;x.jobs.forEach(j=>j.enabled=false)});
-    res.writeHead(303,{Location:'/automation.html?connected=1#connections'});return res.end();
+    res.writeHead(303,{Location:'/kakao.html?connected=1'});return res.end();
    }
    if(req.method==='GET'&&url.pathname==='/api/cloud/runs')return json(res,await cloudRuns());
    if(req.method!=='POST')return json(res,{error:'Not found'},404);
@@ -72,9 +72,9 @@ const server=http.createServer(async(req,res)=>{
    return json(res,{error:'Not found'},404);
   }
   const file=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname).slice(1);
-  if(!/^(index\.html|automation\.html|prompt\.html|report\.html|styles\.css|dashboard\.css|src\/[a-z-]+\.js)$/.test(file))return json(res,{error:'Not found'},404);
+  if(!/^(index\.html|kakao\.html|setup\.css|automation\.html|prompt\.html|report\.html|styles\.css|dashboard\.css|src\/[a-z-]+\.js)$/.test(file))return json(res,{error:'Not found'},404);
   const mime=file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'text/javascript';
   const data=await fs.readFile(path.join(root,file));res.writeHead(200,{'Content-Type':mime+'; charset=utf-8','Cache-Control':'no-store'});res.end(data);
- }catch(e){json(res,{error:e.code==='ENOENT'?'파일을 찾지 못했습니다.':e.message},400)}
+ }catch(e){if(url.pathname==='/api/kakao/callback'){res.writeHead(303,{Location:'/kakao.html?error='+encodeURIComponent(e.message)});res.end();return}json(res,{error:e.code==='ENOENT'?'파일을 찾지 못했습니다.':e.message},400)}
 });
 server.listen(4317,'127.0.0.1',()=>console.log('프롬테카 개인 실행 화면: http://localhost:4317'));
