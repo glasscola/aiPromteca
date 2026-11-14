@@ -72,7 +72,7 @@ const server=http.createServer(async(req,res)=>{
    return json(res,{error:'Not found'},404);
   }
   const file=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname).slice(1);
-  if(!/^(index\.html|kakao\.html|setup\.css|automation\.html|prompt\.html|report\.html|styles\.css|dashboard\.css|src\/[a-z-]+\.js)$/.test(file))return json(res,{error:'Not found'},404);
+  if(!/^(index\.html|kakao\.html|setup\.css|automation\.html|prompt\.html|report\.html|styles\.css|dashboard\.css|src\/(specs\/)?[a-z-]+\.js)$/.test(file))return json(res,{error:'Not found'},404);
   const mime=file.endsWith('.html')?'text/html':file.endsWith('.css')?'text/css':'text/javascript';
   const data=await fs.readFile(path.join(root,file));res.writeHead(200,{'Content-Type':mime+'; charset=utf-8','Cache-Control':'no-store'});res.end(data);
  }catch(e){if(url.pathname==='/api/kakao/callback'){res.writeHead(303,{Location:'/kakao.html?error='+encodeURIComponent(e.message)});res.end();return}json(res,{error:e.code==='ENOENT'?'파일을 찾지 못했습니다.':e.message},400)}

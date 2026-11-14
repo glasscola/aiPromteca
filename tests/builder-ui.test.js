@@ -30,14 +30,15 @@ for(const task of tasks)test('public builder: '+task.id+' selection → settings
   assert.equal(x.doc.querySelector('[data-key="repeat"]'),null);
  }finally{x.finish()}
 });
-test('weather region reaches ChatGPT URL directly without cloud or Kakao',()=>{
- const x=setup();try{x.doc.querySelector('[data-select="weather"]').click();x.doc.getElementById('next').click();input(x.doc.querySelector('[data-task="weather"][data-key="지역"]'),'부산',x.dom);x.doc.getElementById('open-gpt').click();assert.equal(x.opened.length,1);const u=new URL(x.opened[0]);assert.equal(u.origin,'https://chatgpt.com');assert.ok(u.searchParams.get('prompt').includes('지역: 부산'));assert.ok(!u.searchParams.get('prompt').includes('카카오톡'));assert.equal(x.copied.length,0)}finally{x.finish()}
+test('weather region reaches GPT through complete clipboard handoff without cloud or Kakao',async()=>{
+ const x=setup();try{x.doc.querySelector('[data-select="weather"]').click();x.doc.getElementById('next').click();input(x.doc.querySelector('[data-task="weather"][data-key="지역"]'),'부산',x.dom);x.doc.getElementById('open-gpt').click();await new Promise(r=>setImmediate(r));assert.equal(x.copied.length,1);assert.ok(x.copied[0].includes('지역: 부산'));assert.ok(x.copied[0].includes('옷차림'));assert.ok(!x.copied[0].includes('카카오톡'));assert.ok(x.doc.getElementById('transfer-dialog').hasAttribute('open'));assert.equal(x.opened.length,0)}finally{x.finish()}
 });
-test('stock scope, markets and ticker update and hidden values do not leak',()=>{
+
+test('stock scope, markets and ticker update and hidden values do not leak',async()=>{
  const x=setup();try{x.doc.querySelector('[data-select="stocks"]').click();x.doc.getElementById('next').click();
  x.doc.querySelector('[data-key="관심 시장"][value="미국"]').click();x.doc.querySelector('[data-key="관심 범위"][value="특정 종목"]').click();
  input(x.doc.querySelector('[data-key="관심 종목"]'),'NVIDIA',x.dom);assert.ok(x.doc.getElementById('prompt').value.includes('NVIDIA'));
- x.doc.getElementById('open-gpt').click();assert.equal(x.opened.length,1);assert.ok(new URL(x.opened[0]).searchParams.get('prompt').includes('한국, 미국'));
+ x.doc.getElementById('open-gpt').click();await new Promise(r=>setImmediate(r));assert.equal(x.copied.length,1);assert.ok(x.copied[0].includes('한국, 미국'));
  x.doc.querySelector('[data-key="관심 범위"][value="특정 종목"]').click();assert.equal(x.doc.querySelector('[data-key="관심 종목"]'),null);assert.ok(!x.doc.getElementById('prompt').value.includes('NVIDIA'));
  }finally{x.finish()}
 });
@@ -83,4 +84,17 @@ test('connection guides open only on request and never mark an integration conne
   if(channel==='노션')assert.ok(guide.textContent.includes('직접 로그인·저장 기능이 없습니다'));
   guide.querySelector('button').click();assert.ok(!guide.hasAttribute('open'));
  }finally{x.finish()}}
+});
+
+test('routine adds work without losing entered criteria and previews actual deliverables',()=>{
+ const x=setup({saved:{selected:['weather'],values:{weather:{지역:'부산'}},custom:''}});try{
+ x.doc.querySelector('[data-routine="morning"]').click();
+ assert.equal(x.app.getState().step,1);
+ assert.deepEqual(x.app.getState().selected,['weather','air','schedule','todo']);
+ assert.equal(x.app.getState().values.weather.지역,'부산');
+ assert.equal(x.doc.querySelectorAll('#deliverables li').length,4);
+ assert.ok(x.doc.getElementById('prompt').value.includes('[통합 보고]'));
+ assert.ok(x.doc.querySelector('.outcome-card').textContent.includes('옷차림'));
+ assert.ok(!x.doc.querySelector('.raw-prompt').open);
+ }finally{x.finish()}
 });

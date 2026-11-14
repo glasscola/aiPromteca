@@ -1,6 +1,8 @@
 import {tasks} from './catalog.js';
 import {visibleField,effectiveValues} from './task-options.js';
 import {taskRules,researchTasks,materialTasks} from './task-rules.js';
+import {taskSpecs} from './specs/index.js';
+import {commonContract,composeTask} from './prompt-contract.js';
 import {executionRules} from './execution-rules.js';
 export function generate(s){
  if(!s.selected.length&&!s.custom.trim())return '';
@@ -9,8 +11,9 @@ export function generate(s){
   const t=tasks.find(x=>x.id===id);if(!t)continue;
   const v=effectiveValues(t,s.values[id]);
   const rows=t.fields.filter(f=>visibleField(id,f,v)).map(f=>{const a=v[f.label];return a&&(Array.isArray(a)?a.length:true)?f.label+': '+(Array.isArray(a)?a.join(', '):a):''}).filter(Boolean);
-  sections.push('['+t.title+']\n'+rows.join('\n')+'\n처리 기준: '+taskRules[id]);
+  sections.push('['+t.title+']\n'+rows.join('\n')+'\n'+composeTask(taskSpecs[id],v)+'\n처리 기준: '+taskRules[id]);
  }
+ sections.push(commonContract(s));
  if(s.custom.trim())sections.push('[직접 작성한 요청]\n'+s.custom.trim());
  sections.push('[입력 확인]\n필수 정보 누락·조건 충돌만 먼저 질문해. 작업별 조건을 구분하고 예시·빈 입력을 내 정보로 가정하지 마.');
  sections.push('[답변 방식]\n항목별 설명 길이: '+s.length+'\n말투: '+s.tone+'\n형식: '+s.format+'\n짧게는 항목별 설명에만 적용해. 요청한 결과 수를 임의로 줄이지 마. 강조는 실제 굵게 서식으로 표시하고, 서식 미지원 시 별표 없이 작성해.');

@@ -1,7 +1,9 @@
+import {taskSpecs} from './specs/index.js';
+import {routines} from './routines.js';
 import {showConnectionGuide} from './connection-guide.js?v=2';
 import {visibleField,effectiveValues} from './task-options.js';
 import {groups,tasks} from './catalog.js';
-import {generate} from './prompt.js';
+import {generate} from './prompt.js?v=20261114';
 import {initial,restore,save} from './storage.js';
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -21,12 +23,12 @@ export function mountBuilder(doc,dependencies={}){
   const attrs='data-key="'+esc(key)+'" data-task="'+esc(task)+'" placeholder="'+esc(placeholder)+'"';
   return '<label class="field"><span class="field-title">'+esc(label)+'</span>'+(large?'<textarea '+attrs+'>'+esc(value)+'</textarea>':'<input type="'+type+'" '+attrs+' value="'+esc(value)+'">')+'</label>';
  }
- function detail(t){const v=effectiveValues(t,s.values[t.id]);return '<details open class="task-detail"><summary>'+esc(t.icon)+' '+esc(t.title)+'</summary>'+t.fields.filter(f=>visibleField(t.id,f,v)).map(f=>f.type==='text'?input(f.label,v[f.label],f.label,t.id,f.placeholder):options(f.label,f.options,v[f.label],f.label,t.id,f.type==='many')).join('')+'</details>'}
+ function detail(t){const v=effectiveValues(t,s.values[t.id]);return '<details open class="task-detail"><summary>'+esc(t.icon)+' '+esc(t.title)+'</summary><div class="outcome-card"><strong>'+esc(taskSpecs[t.id].goal)+'</strong><p>'+esc(taskSpecs[t.id].output)+'</p></div>'+t.fields.filter(f=>visibleField(t.id,f,v)).map(f=>f.type==='text'?input(f.label,v[f.label],f.label,t.id,f.placeholder):options(f.label,f.options,v[f.label],f.label,t.id,f.type==='many')).join('')+'</details>'}
  function grid(){const list=tasks.filter(t=>(category==='전체'||t.group===category)&&(t.title+' '+t.group+' '+t.fields.map(f=>f.options?.join(' ')||'').join(' ')).includes(query));return list.length?list.map(t=>'<label class="task"><span class="task-icon" aria-hidden="true">'+t.icon+'</span><span>'+esc(t.title)+'</span><input type="checkbox" data-select="'+t.id+'" '+(s.selected.includes(t.id)?'checked':'')+'></label>').join(''):'<div class="empty">찾는 작업이 없으면 아래에 직접 입력하세요.</div>'}
  function render(){
   $('steps').innerHTML=names.map((n,i)=>'<button data-step="'+i+'" class="'+(s.step===i?'active':'')+'" '+(s.step===i?'aria-current="step"':'')+'><span>'+(i+1)+'</span>'+n+'</button>').join('');
   let html='<h2>'+['무엇을 맡길까요?','선택한 일의 조건을 정해주세요.','어떤 답변을 원하세요?','완성된 요청을 GPT로 보내세요.'][s.step]+'</h2>';
-  if(s.step===0)html+='<input class="search" id="search" aria-label="작업 찾기" placeholder="날씨, 증권 뉴스, 여행…" value="'+esc(query)+'"><div class="categories">'+groups.map(g=>'<button data-category="'+esc(g)+'" class="'+(g===category?'active':'')+'" aria-pressed="'+(g===category)+'">'+g+'</button>').join('')+'</div><div class="task-grid" id="task-grid">'+grid()+'</div><label class="field custom"><span class="field-title">목록에 없는 일도 직접 입력하세요.</span><textarea data-key="custom" placeholder="원하는 일이나 추가 조건을 자유롭게 적어주세요.">'+esc(s.custom)+'</textarea></label>';
+  if(s.step===0)html+='<div class="routine-grid">'+routines.map(r=>'<button class="routine" data-routine="'+r.id+'"><span>'+r.icon+'</span><strong>'+r.title+'</strong><span>'+r.result+'</span></button>').join('')+'</div><input class="search" id="search" aria-label="작업 찾기" placeholder="날씨, 증권 뉴스, 여행…" value="'+esc(query)+'"><div class="categories">'+groups.map(g=>'<button data-category="'+esc(g)+'" class="'+(g===category?'active':'')+'" aria-pressed="'+(g===category)+'">'+g+'</button>').join('')+'</div><div class="task-grid" id="task-grid">'+grid()+'</div><label class="field custom"><span class="field-title">목록에 없는 일도 직접 입력하세요.</span><textarea data-key="custom" placeholder="원하는 일이나 추가 조건을 자유롭게 적어주세요.">'+esc(s.custom)+'</textarea></label>';
   if(s.step===1)html+=s.selected.map(id=>detail(tasks.find(t=>t.id===id))).join('')+(!s.selected.length?'<div class="empty">직접 입력한 요청으로 진행합니다.</div>':'')+(s.custom?'<label class="field"><span class="field-title">직접 입력한 요청</span><textarea data-key="custom">'+esc(s.custom)+'</textarea></label>':'');
   if(s.step===2){
    html+='<div class="default-destination">기본 전달처 · GPT</div>'+options('GPT에게 원하는 도움',['바로 답변받기','하는 방법부터 안내받기'],s.intent,'intent')+options('항목별 설명 길이',['짧게','보통','자세히'],s.length,'length')+options('말투',['편하게','정중하게'],s.tone,'tone')+options('결과 형식',['핵심 목록','표','문단'],s.format,'format');
@@ -40,7 +42,7 @@ export function mountBuilder(doc,dependencies={}){
   $('editor').innerHTML=html;preview();
  }
  function preview(){
-  const p=s.edited??generate(s);$('prompt').value=p||'작업을 선택하면 요청문이 여기에 완성됩니다.';$('prompt').readOnly=s.edited===null;
+  const p=s.edited??generate(s);if($('deliverables'))$('deliverables').innerHTML=s.selected.map(id=>'<li><strong>'+esc(tasks.find(t=>t.id===id).title)+'</strong><span>'+esc(taskSpecs[id].output)+'</span></li>').join('')||'<li>직접 입력한 요청을 바탕으로 작성합니다.</li>';$('prompt').value=p||'작업을 선택하면 요청문이 여기에 완성됩니다.';$('prompt').readOnly=s.edited===null;
   $('selection-count').textContent=s.selected.length+'개 선택';
   if($('chosen-status'))$('chosen-status').textContent=s.selected.length?s.selected.length+'개 선택됨':s.custom.trim()?'직접 입력한 요청':'여러 개 선택할 수 있어요';
   $('chips').innerHTML=s.selected.map(id=>{const t=tasks.find(x=>x.id===id);return '<button class="chip" data-remove="'+id+'" aria-label="'+esc(t.title)+' 선택 해제">'+esc(t.title)+' ×</button>'}).join('');
@@ -48,17 +50,18 @@ export function mountBuilder(doc,dependencies={}){
  }
  function valid(){if(!s.selected.length&&!s.custom.trim()){toast('작업을 선택하거나 요청을 입력해주세요.');return false}if(s.repeat==='요일 선택'&&!s.days.length){toast('실행할 요일을 선택해주세요.');return false}if(s.repeat!=='지금 한 번'&&!s.time){toast('실행 시각을 입력해주세요.');return false}return true}
  function move(step){if(step>0&&!valid())return;s.step=step;persist();render();$('steps').scrollIntoView?.({block:'start',behavior:'instant'})}
- async function copy(){try{await clipboard.writeText(s.edited??generate(s));toast('요청문을 복사했습니다.');return true}catch{$('prompt').focus();$('prompt').select();toast('자동 복사가 차단되었습니다. 선택된 요청문을 직접 복사해주세요.');return false}}
+ async function copy(){try{await clipboard.writeText(s.edited??generate(s));toast('요청문을 복사했습니다.');return true}catch{$('prompt').closest('details').open=true;$('prompt').focus();$('prompt').select();toast('자동 복사가 차단되었습니다. 선택된 요청문을 직접 복사해주세요.');return false}}
  async function click(e){
   const b=e.target.closest('button');if(!b)return;
   if(b.dataset.connectionGuide){showConnectionGuide(doc,b.dataset.connectionGuide);return}
+  if(b.dataset.routine){const r=routines.find(x=>x.id===b.dataset.routine);s.selected=[...new Set([...s.selected,...r.tasks])];for(const id of r.tasks)s.values[id]??=effectiveValues(tasks.find(t=>t.id===id));changed();move(1);return}
   if(b.dataset.step!==undefined)return move(Number(b.dataset.step));
   if(b.dataset.category){category=b.dataset.category;render();return}
   if(b.dataset.remove){s.selected=s.selected.filter(x=>x!==b.dataset.remove);changed();render();return}
   if(b.id==='next')return move(s.step+1);if(b.id==='back')return move(s.step-1);
   if(b.id==='reset'){if(win.confirm('선택과 입력을 모두 지울까요?')){s=initial();category='전체';query='';persist();render()}return}
   if(b.id==='copy')return copy();
-  if(b.id==='edit-prompt'){s.edited=s.edited===null?generate(s):null;persist();render();if(s.edited!==null)$('prompt').focus();return}
+  if(b.id==='edit-prompt'){s.edited=s.edited===null?generate(s):null;persist();render();if(s.edited!==null){$('prompt').closest('details').open=true;$('prompt').focus();}return}
   if(b.id==='open-gpt'){
    if(!valid())return;const p=s.edited??generate(s),encoded=encodeURIComponent(p);
    if(encoded.length<=7000){open('https://chatgpt.com/?prompt='+encoded);return}
